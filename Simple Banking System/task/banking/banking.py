@@ -1,5 +1,17 @@
 import random
+import sqlite3
 
+conn = sqlite3.connect('card.s3db')
+cur = conn.cursor()
+
+# cur.execute('SELECT tbl_name FROM sqlite_master WHERE type = "table";')
+# tables = cur.fetchall()
+# if tables == [] or 'card' not in tables[0]:
+#     cur.execute('CREATE TABLE card (id INTEGER PRIMARY KEY, number VALCHAR(16), pin VALCHAR(4), balance INT DEFAULT 0);')
+#     #cur.execute('CREATE TABLE card (id INTEGER PRIMARY KEY, number VALCHAR(16), pin VALCHAR(4), balance INT DEFAULT 0);')
+#     conn.commit()
+
+cur.execute('CREATE TABLE IF NOT EXISTS card (id INTEGER PRIMARY KEY, number TEXT, pin TEXT, balance INTEGER);')
 
 def create_card_num():
     bank_id = 400000
@@ -26,9 +38,16 @@ class Account:
         self.pin = None
         self.balance = 0
         Account.create_pin(self)
+        Account.add_to_database(self)
 
     def create_pin(self):
         self.pin = str(random.randint(0, 9999)).zfill(4)
+
+    def add_to_database(self):
+        cur.execute('INSERT INTO card (number, pin) VALUES ({}, {})'.format(self.card_num, self.pin))
+        conn.commit()
+
+
 
 
 accounts = {}
