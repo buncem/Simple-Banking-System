@@ -7,6 +7,8 @@ cur = conn.cursor()
 cur.execute('CREATE TABLE IF NOT EXISTS card (id INTEGER, number TEXT, pin TEXT, balance INTEGER);')
 conn.commit()
 
+class BankingSystem:
+
 class Account:
     def __init__(self, id = None, card_num=None, pin=None, balance=0):
         self.id = id
