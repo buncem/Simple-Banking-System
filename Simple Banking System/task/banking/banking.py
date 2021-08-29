@@ -13,18 +13,19 @@ class Account:
         self.card_num = card_num
         self.pin = pin
         self.balance = balance
-        self.bank_id = 40000
+        self.bank_id = 400000
 
     def create_card_num(self):
         self.id = random.randint(0, 999999999)
         new_bank_account_str = str(self.bank_id) + str(self.id).zfill(9)
-        self.card_num =  new_bank_account_str + Account.get_checksum(self, new_bank_account_str)
+        self.card_num = new_bank_account_str + Account.get_checksum(self, new_bank_account_str)
 
     def create_pin(self):
         self.pin = str(random.randint(0, 9999)).zfill(4)
 
     def add_income(self, income):
         self.balance += income
+        Account.data_to_database(self, self.card_num, self.balance)
 
     def account_to_database(self):
         cur.execute('INSERT INTO card (id, number, pin, balance) VALUES ({}, {}, {}, {})'.format(self.id, self.card_num, self.pin, self.balance))
@@ -35,11 +36,13 @@ class Account:
         card_data = cur.fetchall()
         if card_data == []:
             print('Wrong card number or PIN!\n')
+            return False
         else:
             self.id = card_data[0][0]
             self.card_num = card_data[0][1]
             self.pin = card_data[0][2]
             self.balance = card_data[0][3]
+            return True
 
     def data_to_database(self, card_number, new_balance):
         cur.execute('UPDATE card SET balance={} WHERE number={};'.format(new_balance, card_number))
@@ -49,12 +52,17 @@ class Account:
         cur.execute('SELECT * FROM card WHERE number={};'.format(card_number))
         return cur.fetchall()
 
+    def delete_account_database(self):
+        cur.execute('DELETE FROM card WHERE id={};'.format(self.id))
+        conn.commit()
+
     def transfer(self, card_data):
         transfer_amount = int(input('Enter how much money you want to transfer:\n').strip())
         if transfer_amount > self.balance:
             print('Not enough money!\n')
         else:
             self.balance -= transfer_amount
+            Account.data_to_database(self, self.card_num, self.balance)
             new_balance = card_data[0][3] + transfer_amount
             Account.data_to_database(self, card_data[0][1], new_balance)
             print('Success!\n')
@@ -87,10 +95,14 @@ class Account:
                     continue
                 else:
                     Account.transfer(self, card_data)
+            elif inside_user_input == '4':
+                Account.delete_account_database(self)
+                print('The account has been closed!\n')
+                return False
             elif inside_user_input == '5':
                 print('You have successfully logged out!')
                 print()
-                break
+                return False
             elif inside_user_input == '0':
                 return True
             else:
@@ -112,8 +124,6 @@ class Account:
         else:
             checksum = 10 - control_num % 10
         return str(checksum)
-
-accounts = {}
 
 while True:
     print('1. Create an account')
@@ -137,48 +147,11 @@ while True:
         pin = input('Enter your PIN:\n').strip()
         print()
         account = Account()
-        account.account_from_database(card_num, pin)
+        if account.account_from_database(card_num, pin) == False:
+            continue
         print('You have successfully logged in!\n')
         if account.inside_menu():
             break
-
-
-        # if card_num in accounts and pin == accounts[card_num].pin:
-        #         print('You have successfully logged in!')
-        #         print()
-        #         while True:
-        #             print('1. Balance')
-        #             print('2. Add income')
-        #             print('3. Do transfer')
-        #             print('4. Close account')
-        #             print('5. Log out')
-        #             print('0. Exit')
-        #             inside_user_input = input().strip()
-        #             print()
-        #             if inside_user_input == '1':
-        #                 print('Balance: {}\n'.format(accounts[card_num].balance))
-        #             elif inside_user_input == '2':
-        #                 income = int(input('Enter income:\n').strip())
-        #                 accounts[card_num].add_income()
-        #                 print('Income was added!\n')
-        #             elif inside_user_input == '3':
-        #                 transfer_card_num = input('Enter card number:\n').strip()
-        #                 check_transfer_card_num(transfer_card_num)
-        #
-        #             elif inside_user_input == '5':
-        #                 print('You have successfully logged out!')
-        #                 print()
-        #                 break
-        #             elif inside_user_input == '0':
-        #                 break
-        #             else:
-        #                 print('Not a valid choice')
-        #         if inside_user_input == '0':
-        #             break
-        #
-        # else:
-        #     print('Wrong card number or PIN!')
-        #     print()
     elif user_input == '0':
         break
     else:
