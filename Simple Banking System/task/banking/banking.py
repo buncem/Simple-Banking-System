@@ -1,3 +1,4 @@
+import sys
 import random
 import sqlite3
 
@@ -6,8 +7,6 @@ cur = conn.cursor()
 
 cur.execute('CREATE TABLE IF NOT EXISTS card (id INTEGER, number TEXT, pin TEXT, balance INTEGER);')
 conn.commit()
-
-class BankingSystem:
 
 class Account:
     def __init__(self, id = None, card_num=None, pin=None, balance=0):
@@ -127,13 +126,31 @@ class Account:
             checksum = 10 - control_num % 10
         return str(checksum)
 
-while True:
-    print('1. Create an account')
-    print('2. Log into account')
-    print('0. Exit')
-    user_input = input().strip()
-    print()
-    if user_input == '1':
+class Menu:
+    def __init__(self):
+        self.choices = {
+            "1": self.create_account,
+            "2": self.log_in,
+            "0": self.exit
+        }
+
+    def display_menu(self):
+        print('1. Create an account')
+        print('2. Log into account')
+        print('0. Exit')
+
+    def run(self):
+        while True:
+            self.display_menu()
+            user_input = input().strip()
+            print()
+            action = self.choices.get(user_input)
+            if action:
+                action()
+            else:
+                print('Not a valid choice\n')
+
+    def create_account(self):
         account = Account()
         account.create_card_num()
         account.create_pin()
@@ -144,19 +161,25 @@ while True:
         print('Your card PIN:')
         print(account.pin)
         print()
-    elif user_input == '2':
+
+    def log_in(self):
         card_num = input('Enter your card number:\n').strip()
         pin = input('Enter your PIN:\n').strip()
         print()
         account = Account()
         if account.account_from_database(card_num, pin) == False:
-            continue
+            pass
         print('You have successfully logged in!\n')
         if account.inside_menu():
-            break
-    elif user_input == '0':
-        break
-    else:
-        print('Not a valid choice')
+            print('Bye!')
+            sys.exit(0)
 
-print('Bye!')
+    def exit(self):
+        print('Bye!')
+        sys.exit(0)
+
+
+
+if __name__ == "__main__":
+    Menu().run()
+
